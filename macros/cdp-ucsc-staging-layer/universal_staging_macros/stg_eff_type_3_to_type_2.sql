@@ -22,6 +22,7 @@
 {%- set col_casted_as =  {} -%}
 {%- set col_renamed_as = {} -%}
 {%- set soft_delete_cols = [] -%}
+{%- set source_cte_fltrs = [] -%}
 
 {# USE GRAPH CONTEXT VARIABLE TO GET TABLE INFORMATION FROM THE MANIFEST.JSON WHICH REFLECTS PROP. AND CONFIG. DECLARATIONS IN THE SOURCE.YML #}
 {%- for table_attributes in graph.sources.values() | selectattr("name", "equalto", table_name) -%}
@@ -31,6 +32,11 @@
     {# GET THE MODEL'S PARTITION COLUMNS FROM THE GRAPH CONTEXT VARIABLE #}
     {% for i in table_attributes.meta.partition_columns %}
     {% do partition_cols.append(i) %}
+    {% endfor %}
+
+    {# GET THE MODEL'S SOURCE CTE FILTERS FROM THE GRAPH CONTEXT VARIABLE #}
+    {% for i in table_attributes.meta.source_cte_filters %}
+    {% do source_cte_fltrs.append(i) %}
     {% endfor %}
 
     {# GET COLUMN AND COLUMN INFORMATION FROM THE GRAPH CONTEXT VARIABLE #}
@@ -74,9 +80,16 @@
 with
     source as (
         select * from {% raw -%} {{ source( {%- endraw -%} '{{ source_name }}', '{{ table_name }}' {%- raw -%} ) }}{% endraw %}
-        {%- if soft_delete_cols[0] %}
+        {%- if soft_delete_cols[0] and not source_cte_fltrs[0] %}
         where
             {{ soft_delete_cols | join('\nand ') | indent(12) }}
+        {%- elif not soft_delete_cols[0] and source_cte_fltrs[0] %}
+        where
+            {{ source_cte_fltrs | join('\nand ') | indent(12) }}
+        {%- elif soft_delete_cols[0] and source_cte_fltrs[0] %}
+        where
+            {{ soft_delete_cols | join('\nand ') | indent(12) }}
+            and {{ source_cte_fltrs | join('\nand ') | indent(12) }}
         {%- endif %}
     ),
 
