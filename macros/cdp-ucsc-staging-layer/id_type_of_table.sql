@@ -1,22 +1,28 @@
-
+/*
+- RUN IN A SNOWFLAKE WORKSHEET
+- DATABASE: RAW
+- REPLACE TABLE_SCHEMA
+- REPLACE EFFDT
+- REPLACE EFFSEQ
+*/
 
 with
     all_tables as (
         select distinct
             table_schema,
             table_name
-        from columns
-        where table_schema = 'CSPRD_SYSADM' 
+        from information_schema.columns
+        where table_schema = 'ODSPRD_HCM_ODS'
     ),
-    
+
     effdt_tables as (
         select
             table_schema,
             table_name,
             column_name,
             data_type as effdt_data_type
-        from columns
-        where table_schema = 'CSPRD_SYSADM' 
+        from information_schema.columns
+        where table_schema = 'ODSPRD_HCM_ODS'
         and column_name = 'EFFDT'
     ),
 
@@ -24,9 +30,9 @@ with
         select
             table_name,
             column_name
-        from columns
-        where table_schema = 'CSPRD_SYSADM' 
-        and column_name = '%EFFSEQ%'
+        from information_schema.columns
+        where table_schema = 'ODSPRD_HCM_ODS'
+        and column_name ilike '%EFFSEQ%'
     ),
 
     effdt_effseq_tables as (
