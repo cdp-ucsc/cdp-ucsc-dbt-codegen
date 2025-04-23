@@ -4,12 +4,17 @@
 test: ## Run the integration tests.
 	@./run_test.sh $(target)
 
+.PHONY: test_tox
+test: ## Run the integration tests with tox
+	@\
+	tox -e dbt_integration_$(target)
+
 .PHONY: dev
 dev: ## Installs dbt-* packages in develop mode along with development dependencies.
 	@\
 	echo "Install dbt-$(target)..."; \
 	python -m pip install --upgrade pip setuptools; \
-	python -m pip install --pre dbt-core "dbt-$(target)";
+	python -m pip install dbt-core "dbt-$(target)";
 
 .PHONY: setup-db
 setup-db: ## Setup Postgres database with docker-compose for system testing.
